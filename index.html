@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ASHS 115 Yi 語錄回憶錄</title>
+    <style>
+      :root {
+        --bg: #f7f9fc;
+        --card: #ffffff;
+        --text: #1f2a37;
+        --muted: #6b7280;
+        --accent: #2563eb;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+        background: linear-gradient(180deg, #eef3ff 0%, var(--bg) 30%);
+        color: var(--text);
+      }
+      .container {
+        width: min(1000px, 92vw);
+        margin: 2rem auto 4rem;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      h1 { margin-bottom: 0.25rem; }
+      .subtitle { color: var(--muted); margin-top: 0; }
+      .toolbar {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 1.25rem;
+      }
+      input, select {
+        border: 1px solid #d1d5db;
+        border-radius: 0.6rem;
+        padding: 0.65rem 0.8rem;
+        font-size: 0.95rem;
+        background: white;
+      }
+      #search { width: min(380px, 90vw); }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid #e5e7eb;
+        border-radius: 1rem;
+        padding: 1rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+      }
+      .quote {
+        font-size: 1.02rem;
+        line-height: 1.55;
+        margin: 0 0 0.7rem;
+      }
+      .meta {
+        font-size: 0.85rem;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        border-radius: 999px;
+        background: #e8f0ff;
+        color: var(--accent);
+        font-size: 0.75rem;
+        padding: 0.2rem 0.6rem;
+      }
+      .empty {
+        text-align: center;
+        color: var(--muted);
+        padding: 2rem 1rem;
+      }
+      footer {
+        margin-top: 2rem;
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      code {
+        background: #eef2ff;
+        padding: 0.1rem 0.35rem;
+        border-radius: 0.35rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <h1>ASHS 115 Yi 語錄回憶錄</h1>
+        <p class="subtitle">把老師常說的話收藏起來，隨時回顧、隨時會心一笑。</p>
+      </header>
+
+      <section class="toolbar" aria-label="篩選工具">
+        <input id="search" type="search" placeholder="搜尋語錄、情境、關鍵字…" />
+        <select id="teacherFilter">
+          <option value="all">全部老師</option>
+        </select>
+      </section>
+
+      <section id="quoteGrid" class="grid" aria-live="polite"></section>
+      <p id="emptyState" class="empty" hidden>目前沒有符合條件的語錄。</p>
+
+      <footer>
+        想新增內容？請編輯 <code>quotes.js</code> 內的資料。
+      </footer>
+    </main>
+
+    <script src="quotes.js"></script>
+    <script>
+      const searchEl = document.getElementById('search');
+      const teacherFilterEl = document.getElementById('teacherFilter');
+      const quoteGridEl = document.getElementById('quoteGrid');
+      const emptyStateEl = document.getElementById('emptyState');
+
+      const teachers = [...new Set(quotes.map((q) => q.teacher))].sort();
+      teachers.forEach((teacher) => {
+        const option = document.createElement('option');
+        option.value = teacher;
+        option.textContent = teacher;
+        teacherFilterEl.appendChild(option);
+      });
+
+      function render() {
+        const keyword = searchEl.value.trim().toLowerCase();
+        const teacher = teacherFilterEl.value;
+
+        const filtered = quotes.filter((q) => {
+          const byTeacher = teacher === 'all' || q.teacher === teacher;
+          const byKeyword =
+            !keyword ||
+            q.text.toLowerCase().includes(keyword) ||
+            q.context.toLowerCase().includes(keyword) ||
+            q.tags.join(' ').toLowerCase().includes(keyword);
+          return byTeacher && byKeyword;
+        });
+
+        quoteGridEl.innerHTML = '';
+
+        if (!filtered.length) {
+          emptyStateEl.hidden = false;
+          return;
+        }
+
+        emptyStateEl.hidden = true;
+
+        filtered.forEach((q) => {
+          const card = document.createElement('article');
+          card.className = 'card';
+          card.innerHTML = `
+            <p class="quote">「${q.text}」</p>
+            <div class="meta">
+              <span>${q.teacher}</span>
+              <span>${q.context}</span>
+            </div>
+            <p>${q.tags.map((t) => `<span class="tag">#${t}</span>`).join(' ')}</p>
+          `;
+          quoteGridEl.appendChild(card);
+        });
+      }
+
+      searchEl.addEventListener('input', render);
+      teacherFilterEl.addEventListener('change', render);
+      render();
+    </script>
+  </body>
+</html>
